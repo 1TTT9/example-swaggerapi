@@ -1,0 +1,291 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "This is a sample API server.  You can find out more at <a href=\"http://test.com\">http://test.com</a>. For this sample, you can use the api key \"special-key\" to test the authorization filters",
+    "version": "1.0.0",
+    "title": "GGDAPI",
+    "termsOfService": "http://test.com/terms/",
+    "contact": {
+      "name": "apiteam@1ttt9.com"
+    }
+  },
+  "host": "192.168.1.178:8000",
+  "basePath": "/v1",
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "comment":"---------------------------- fdp starts ------------------------------------",
+    "/fps/verify": {
+      "post": {
+        "tags": [
+          "fps"
+        ],
+        "summary": "Place a transaction for conducting fraud protection service",
+        "description": "",
+        "operationId": "verify",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "parameters": [
+          {
+            "in": "ndbody",
+            "name": "ndbody",
+            "description": "necessary data",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/NDData"
+            }
+          },          
+          {
+            "in": "udbody",
+            "name": "udbody",
+            "description": "Created user data object. Some of these fields are MD5 hash fields. Such fields should be passed as an MD5 hash in hex form. Always lower-case the input before hashing. Do not use any salt when hashing these inputs.",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/UserData"
+            }
+          },
+          {
+            "in": "binbody",
+            "name": "binbody",
+            "description": "Created BIN-related data object. These fields are used to verify that the customer is in possession of the credit card.",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/BinData"
+            }
+          },
+          {
+            "in": "tibody",
+            "name": "tibody",
+            "description": " These fields provide additional information about the transaction.",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/TIData"
+            }
+          },
+          {
+            "comment":"===============  Miscellaneous",
+            "in": "ms_requestType",
+            "name": "requestType",
+            "description": "request type for different retrieval of fps membership.",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/verified_result"
+            }
+          },
+          "400": {
+            "description": "Invalid verify action"
+          }
+        }
+      }
+    },
+    "/fps/result/{verify_id}": {
+      "get": {
+        "tags": [
+          "fps"
+        ],
+        "summary": "look up verified_result message by verified_id",
+        "description": "",
+        "operationId": "getResultByVerifyId",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "parameters": [
+          {
+            "in": "verify_id",            
+            "name": "verify_id",
+            "description": "ID of verify-request that needs to be fetched. ",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {          
+          "404": {
+            "description": "verify_id not found"
+          },
+          "405": {
+            "description": "INVALID_LICENSE_KEY/IP_REQUIRED/IP_NOT_FOUND"
+          },          
+          "406": {
+            "description": "MAX_REQUESTS_REACHED"
+          },                    
+          "407": {
+            "description": "LICENSE_REQUIRED"
+          },
+          "400": {
+            "description": "Invalid ID supplied"
+          },                                      
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$ref": "#/definitions/verified_result"
+            }
+          }
+        }
+      }
+    },
+    "comment":"---------------------------- fdp ends ------------------------------------"
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "api_key",
+      "in": "header"
+    },
+    "productstore_auth": {
+      "type": "oauth2",
+      "authorizationUrl": "",
+      "flow": "implicit",
+      "scopes": {
+        "write:products": "modify products in your account",
+        "read:products": "read your products"
+      }
+    }
+  },
+  "definitions": {
+    "NDData": {
+      "properties" : {
+        "ip": {
+          "type": "string",
+          "description": "The IP address of the customer placing the order. This should be passed as a string like “44.55.66.77” or “2001:db8::2:1″.",
+          "required": true      
+        },
+        "license_key": {
+          "type": "string",
+          "description": "license key for accessing FPS",
+          "required": true
+        }
+      },
+      "xml": "NDData"
+    },
+    "UserData": {
+      "properties": {
+        "domain": {
+          "type": "string",
+          "description": "The domain for the user’s email address. This field should not be hashed.",
+          "required": false       
+        },
+        "phone": {
+          "type": "string",
+          "description": "The customer’s phone number, including area code and local exchange. This is used to verify that the customer’s phone number is in the same billing location as the cardholder. Most formats are acceptable. We strip out all non-numeric characters from the input.",
+          "required": false
+        },
+        "emailMD5": {
+          "type": "string",
+          "description": "An MD5 hash of the user’s email address in ASCII encoding.",
+          "required": false,
+          "format": "int32"          
+        },
+        "usernameMD5": {
+          "type": "string",
+          "description": "An MD5 hash of the user’s username in ASCII encoding.",
+          "required": false
+        }        
+      },
+      "xml": {
+        "name": "UserData"
+      }
+    },
+    "BinData": {
+      "properties": {
+        "bin": {
+          "type": "string",
+          "description": "The credit card BIN number. This is the first 6 digits of the credit card number. It identifies the issuing bank.",
+          "required": false       
+        },
+        "binName": {
+          "type": "string",
+          "description": "The name of the bank which issued the credit card, based on the BIN number. This is used to verify that cardholder is in possession of credit card. You must set the bin field if you set this one.",
+          "required": false
+        },
+        "binPhone": {
+          "type": "string",
+          "description": "The customer service phone number listed on the back of the credit card. This is used to verify that cardholder is in possession of credit card. You must set the bin field if you set this one.",
+          "required": false
+        }
+      },
+      "xml": {
+        "name": "BinData"
+      }
+    },
+    "TIData": {
+      "properties": {
+        "txnID": {
+          "type": "string",
+          "description": "Your internal transaction ID for the order. We can use this to locate a specific transaction in our logs, and it will also show up in email alerts and notifications from us to you.",
+          "required": false       
+        },
+        "odr_amount": {
+          "type": "integer",
+          "description": "The customer’s order amount.",
+          "required": false
+        },
+        "odr_currency": {
+          "type": "string",
+          "description": "The currency used for the customer’s order as an ISO 4217 code.",
+          "required": false
+        },        
+        "shopID": {
+          "type": "string",
+          "description": "Your internal ID for the shop, affiliate, or merchant this order is coming from. Required for spike users who are resellers, payment providers, gateways and affiliate networks.",
+          "required": false
+        },        
+        "txnType": {
+          "type": "integer",
+          "description": "The transaction type. This can be set to one of the following strings:creditcard, debitcard, paypal, google – Google checkout, other, lead – lead generation, survey – online survey, sitereg – site registration. The lead, survey, and sitereg types are used for non-purchase transactions.",
+          "required": false,
+          "format": "enum"          
+        },        
+        "useragent_lang": {
+          "type": "string",
+          "description": "The User-Agent HTTP header.",
+          "required": false
+        },        
+        "useragent": {
+          "type": "string",
+          "description": "The Accept-Language HTTP header.",
+          "required": false
+        }
+      },
+      "xml": {
+        "name": "TIData"
+      }
+    },
+    "verified_result": {
+      "properties": {
+        "verify_id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "riskScore": {
+          "type": "integer",
+          "format": "int64",
+          "description": "This field contains the risk score, from 0.01 to 100. A higher score indicates a higher risk of fraud. For example, a score of 20 indicates a 20% chance that a transaction is fraudulent. We never return a risk score of 0, since all transactions have the possibility of being fraudulent."
+        },
+        "verify_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "explanation": {
+          "type": "string",
+          "description": "This is a brief explanation of the riskScore"
+        },
+        "complete": {
+          "type": "boolean"
+        }
+      },
+      "xml": {
+        "name": "verified_result"
+      }
+    }
+  }
+}
